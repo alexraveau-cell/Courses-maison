@@ -126,7 +126,7 @@ async function loadFromSupabase(){
   }
 
   const {data:items,error:itemsError}=await supabaseClient
-    .from('Item')
+    .from('items')
     .select('*')
     .order('name');
 
