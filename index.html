@@ -206,7 +206,26 @@ function render(){
   </div>`;
  }
 }
-function change(id,d){const p=data.products.find(x=>x.id===id);if(p){p.qty=Math.max(0,p.qty+d);save();render()}}
+async function change(id,d){
+  const p=data.products.find(x=>x.id===id);
+  if(!p)return;
+
+  const newQty=Math.max(0,p.qty+d);
+
+  const {error}=await supabaseClient
+    .from('items')
+    .update({quantity:newQty})
+    .eq('id',p.id);
+
+  if(error){
+    alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  p.qty=newQty;
+  save();
+  render();
+}
 function delProduct(id){if(confirm('Supprimer cet article ?')){data.products=data.products.filter(p=>p.id!==id);save();render()}}
 function openProduct(id=null,room=null){editingProduct=id;productTitle.textContent=id?'Modifier l’article':'Ajouter un article';pRoom.innerHTML=data.rooms.map(r=>`<option>${esc(r)}</option>`).join('');const p=data.products.find(x=>x.id===id);pName.value=p?.name||'';pQty.value=p?.qty??0;pMin.value=p?.min??1;pRoom.value=p?.room||room||data.rooms[0]||'';productDlg.showModal()}
 function saveProduct(){const name=pName.value.trim();if(!name)return alert('Indique un nom.');if(!pRoom.value)return alert('Ajoute d’abord une pièce.');const obj={name,room:pRoom.value,qty:Math.max(0,+pQty.value||0),min:Math.max(0,+pMin.value||0)};if(editingProduct){Object.assign(data.products.find(p=>p.id===editingProduct),obj)}else data.products.push({id:crypto.randomUUID(),...obj});save();productDlg.close();render()}
