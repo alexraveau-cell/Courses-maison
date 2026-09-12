@@ -72,45 +72,48 @@ const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],
 ]};
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
 async function migrateLocalProductsToSupabase(){
-  alert(JSON.stringify(data.products.map(p=>({
-  article:p.name,
-  piece:p.room
-})),null,2));
-return;
-  let errors=[];
+  const {data:rooms,error:roomsError}=await supabaseClient
+    .from('rooms')
+    .select('id,name');
 
-  for(const p of data.products){
-    const room=await supabaseClient
-      .from('rooms')
-      .select('id')
-      .eq('name',p.room)
-      .single();
-
-    if(room.error){
-      errors.push(p.name+' → pièce: '+JSON.stringify(room.error));
-      continue;
-    }
-
-    const result=await supabaseClient
-      .from('Item')
-      .insert({
-        id:p.id,
-        room_id:room.data.id,
-        name:p.name,
-        quantity:p.qty,
-        min_quantity:p.min
-      });
-
-    if(result.error){
-      errors.push(p.name+' → article: '+JSON.stringify(result.error));
-    }
+  if(roomsError){
+    alert('Erreur lecture des pièces : '+JSON.stringify(roomsError));
+    return;
   }
 
-  if(errors.length){
-    alert('ERREURS:\\n\\n'+errors.join('\\n\\n'));
-  }else{
-    alert('Migration réussie : '+data.products.length+' articles transférés.');
+  const roomMap={};
+  rooms.forEach(r=>{
+    roomMap[r.name]=r.id;
+  });
+
+  const rows=data.products.map(p=>({
+    id:p.id,
+    room_id:roomMap[p.room],
+    name:p.name,
+    quantity:p.qty,
+    min_quantity:p.min
+  }));
+
+  const invalid=rows.filter(r=>!r.room_id);
+
+  if(invalid.length){
+    alert(
+      'Pièce introuvable pour :\n\n'+
+      invalid.map(r=>r.name).join('\n')
+    );
+    return;
   }
+
+  const {error}=await supabaseClient
+    .from('items')
+    .insert(rows);
+
+  if(error){
+    alert('Erreur insertion :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  alert('Migration réussie : '+rows.length+' articles transférés !');
 }
 async function loadFromSupabase(){
   const {data:rooms,error:roomsError}=await supabaseClient
