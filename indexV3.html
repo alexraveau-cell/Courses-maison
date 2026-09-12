@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7fb">
+<title>Courses Maison</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:#f6f7fb;color:#17181c}
+.app{max-width:560px;margin:auto;min-height:100vh;padding-bottom:92px}header{padding:26px 20px 10px}h1{font-size:30px;margin:0 0 4px}.sub{color:#777}
+.view{padding:8px 16px}.card{background:#fff;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 2px 14px #0000000a}.big{font-size:20px;font-weight:750}.muted{color:#777}
+.primary,.secondary,.dangerBtn{border:0;border-radius:14px;padding:13px 16px;font-size:16px;font-weight:650;width:100%;margin-top:10px}.primary{background:#17181c;color:#fff}.secondary{background:#eee;color:#17181c}.dangerBtn{background:#fee;color:#b22}
+.row{display:flex;align-items:center;gap:12px}.space{justify-content:space-between}.icon{font-size:25px}.pill{background:#f0f1f5;border-radius:20px;padding:6px 10px;font-size:13px}
+.item{padding:13px 0;border-bottom:1px solid #eee}.item:last-child{border-bottom:0}.step{display:flex;align-items:center;gap:8px}.step button{width:34px;height:34px;border:0;border-radius:10px;background:#eee;font-size:20px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(560px,100%);height:78px;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);z-index:4}
+nav button{border:0;background:none;font-size:12px;color:#777;flex:1}nav button.active{color:#111;font-weight:700}nav span{display:block;font-size:23px;margin-bottom:2px}
+.section{font-size:13px;font-weight:800;color:#777;margin:20px 4px 6px;text-transform:uppercase}.empty{text-align:center;padding:40px 15px}.ok{font-size:46px}
+dialog{border:0;border-radius:22px;width:min(94%,450px);padding:0;box-shadow:0 20px 60px #0004}dialog::backdrop{background:#0006}.modal{padding:22px}.modal input,.modal select{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;margin:7px 0 13px;font-size:16px}.actions{display:flex;gap:10px}.actions>*{flex:1}.smallBtn{border:0;border-radius:10px;background:#eee;padding:8px 10px}.delete{color:#b22;background:none;border:0;font-weight:650}.edit{color:#555;background:none;border:0;font-weight:650}
+.check{appearance:none;width:24px;height:24px;border:2px solid #aaa;border-radius:7px;display:inline-grid;place-content:center;flex:0 0 auto}.check:checked{background:#17181c;border-color:#17181c}.check:checked:after{content:"✓";color:white;font-weight:800}
+.buyQty{width:62px;padding:8px;border:1px solid #ddd;border-radius:10px;font-size:16px;text-align:center}
+.roomHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.roomTitle{font-size:18px;font-weight:800}.hint{font-size:13px;color:#777}
+.badge{font-size:12px;background:#fff0d8;border-radius:12px;padding:5px 8px;color:#875700}.good{background:#e9f8ee;color:#276b3b}
+hr{border:0;border-top:1px solid #eee;margin:14px 0}
+
+.validateBuy{border:0;border-radius:12px;background:#17181c;color:#fff;padding:11px 14px;font-size:15px;font-weight:700}
+.validateBuy:disabled{background:#ddd;color:#999}
+.buyStepper{display:flex;align-items:center;gap:8px}
+.buyStepper button{width:38px;height:38px;border:0;border-radius:10px;background:#eee;font-size:22px}
+.buyNumber{min-width:28px;text-align:center;font-size:17px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>Ma maison 🏠</h1><div class="sub">Stocks et liste de courses</div></header>
+<main id="content"></main>
+<nav>
+<button data-tab="home" onclick="show('home')"><span>🏠</span>Accueil</button>
+<button data-tab="shopping" onclick="show('shopping')"><span>🛒</span>Courses</button>
+<button data-tab="stock" onclick="show('stock')"><span>📦</span>Stock</button>
+<button data-tab="settings" onclick="show('settings')"><span>⚙️</span>Gestion</button>
+</nav>
+</div>
+
+<dialog id="productDlg"><div class="modal">
+<h2 id="productTitle">Ajouter un article</h2>
+<label>Nom de l'article</label><input id="pName" placeholder="Ex. Lait">
+<label>Pièce</label><select id="pRoom"></select>
+<label>Stock actuel</label><input id="pQty" type="number" min="0" step="1" value="0">
+<label>Seuil minimum</label><input id="pMin" type="number" min="0" step="1" value="1">
+<div class="actions"><button class="secondary" onclick="productDlg.close()">Annuler</button><button class="primary" onclick="saveProduct()">Enregistrer</button></div>
+</div></dialog>
+
+<dialog id="roomDlg"><div class="modal">
+<h2 id="roomTitle">Ajouter une pièce</h2>
+<label>Nom de la pièce</label><input id="rName" placeholder="Ex. Cuisine">
+<div class="actions"><button class="secondary" onclick="roomDlg.close()">Annuler</button><button class="primary" onclick="saveRoom()">Enregistrer</button></div>
+</div></dialog>
+
+<script>
+const KEY='coursesMaisonV2';
+const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],products:[
+{id:crypto.randomUUID(),name:'Lait',room:'Cuisine',qty:1,min:2},
+{id:crypto.randomUUID(),name:'Pâtes',room:'Cuisine',qty:4,min:2},
+{id:crypto.randomUUID(),name:'Café',room:'Cuisine',qty:0,min:1},
+{id:crypto.randomUUID(),name:'Dentifrice',room:'Salle de bain',qty:1,min:1},
+{id:crypto.randomUUID(),name:'Lessive',room:'Buanderie',qty:0,min:1},
+{id:crypto.randomUUID(),name:'Papier toilette',room:'Salle de bain',qty:3,min:4}
+]};
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
+let tab='home', editingProduct=null, editingRoom=null;
+function save(){localStorage.setItem(KEY,JSON.stringify(data))}
+function missing(){return data.products.filter(p=>p.qty<p.min)}
+function show(t){tab=t;render()}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function roomsGrouped(list){let g={};list.forEach(p=>(g[p.room]??=[]).push(p));return g}
+function render(){
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+ const c=document.getElementById('content'), m=missing();
+ if(tab==='home'){
+  c.innerHTML=`<div class="view">
+  <div class="card"><div class="big">Bonjour Céline et Alex 👋</div><div class="muted">${m.length} article${m.length>1?'s':''} sous le seuil</div>
+  <button class="primary" onclick="show('shopping')">🛒 Voir ma liste de courses</button></div>
+  <div class="section">À acheter</div>
+  ${m.length?`<div class="card">${m.map(p=>`<div class="item row space"><span>${esc(p.name)}</span><b>× ${p.min-p.qty}</b></div>`).join('')}</div>`:`<div class="card empty"><div class="ok">✅</div><b>Tout est en stock !</b></div>`}
+  <div class="section">Pièces</div><div class="card">${data.rooms.map(r=>`<div class="item row space"><span>${esc(r)}</span><span class="pill">${data.products.filter(p=>p.room===r).length} article(s)</span></div>`).join('')}</div>
+  </div>`;
+ }
+ if(tab==='shopping'){
+  const g=roomsGrouped(m);
+  c.innerHTML=`<div class="view"><div class="card"><div class="big">🛒 Ma liste</div><div class="muted">Coche un article après l'achat et indique la quantité réellement achetée.</div></div>
+  ${Object.keys(g).length?Object.entries(g).map(([r,ps])=>`<div class="section">${esc(r)}</div><div class="card">${ps.map(p=>`
+  <div class="item" id="shopping-${p.id}">
+   <div class="row">
+    <input class="check" id="check-${p.id}" type="checkbox" onchange="toggleBuy('${p.id}',this.checked)">
+    <div style="flex:1"><b>${esc(p.name)}</b><div class="hint">Stock ${p.qty} · minimum ${p.min} · conseillé ${p.min-p.qty}</div></div>
+   </div>
+   <div class="row space" style="margin-top:12px">
+    <span>Quantité achetée</span>
+    <div class="buyStepper">
+      <button type="button" onclick="changeBuyQty('${p.id}',-1)">−</button>
+      <span class="buyNumber" id="buy-${p.id}">${Math.max(1,p.min-p.qty)}</span>
+      <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
+    </div>
+   </div>
+   <button type="button" class="validateBuy" id="validate-${p.id}" style="display:none;width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
+  </div>`).join('')}</div>`).join(''):`<div class="card empty"><div class="ok">🎉</div><b>Liste vide</b><div class="muted">Tous les articles sont au-dessus de leur seuil.</div></div>`}
+  </div>`;
+ }
+ if(tab==='stock'){
+  const g=roomsGrouped(data.products);
+  c.innerHTML=`<div class="view"><button class="primary" onclick="openProduct()">＋ Ajouter un article</button>
+  ${data.rooms.map(r=>`<div class="section">${esc(r)}</div><div class="card">
+   <div class="roomHead"><div><div class="roomTitle">${esc(r)}</div><div class="hint">${data.products.filter(p=>p.room===r).length} article(s)</div></div><button class="smallBtn" onclick='openProduct(null,${JSON.stringify(r)})'>＋ Article</button></div>
+   ${g[r]?.length?g[r].map(p=>`<div class="item">
+    <div class="row space"><div><b>${esc(p.name)}</b><div class="hint">Minimum : ${p.min}${p.qty<p.min?` · <span style="color:#b22">À acheter ${p.min-p.qty}</span>`:''}</div></div>
+    <div class="row"><button class="edit" onclick='openProduct(${JSON.stringify(p.id)})'>Modifier</button><button class="delete" onclick='delProduct(${JSON.stringify(p.id)})'>Supprimer</button></div></div>
+    <div class="row space" style="margin-top:10px"><span>Stock : <b>${p.qty}</b></span><div class="step"><button onclick='change(${JSON.stringify(p.id)},-1)'>−</button><button onclick='change(${JSON.stringify(p.id)},1)'>+</button></div></div>
+   </div>`).join(''):`<div class="empty"><div class="muted">Aucun article dans cette pièce.</div></div>`}
+  </div>`).join('')}
+  </div>`;
+ }
+ if(tab==='settings'){
+  c.innerHTML=`<div class="view">
+  <div class="card"><div class="big">⚙️ Gestion des pièces</div><div class="muted">Ajoute, renomme ou supprime les pièces de la maison.</div><button class="primary" onclick="openRoom()">＋ Ajouter une pièce</button>
+  ${data.rooms.map(r=>`<div class="item row space"><div><b>${esc(r)}</b><div class="hint">${data.products.filter(p=>p.room===r).length} article(s)</div></div><div class="row"><button class="edit" onclick='openRoom(${JSON.stringify(r)})'>Renommer</button><button class="delete" onclick='delRoom(${JSON.stringify(r)})'>Supprimer</button></div></div>`).join('')}</div>
+  <div class="card"><div class="big">☁️ Synchronisation</div><div class="muted">La version actuelle fonctionne sur cet appareil. Pour partager le stock avec le téléphone de ta femme, nous ajouterons ensuite la synchronisation en ligne.</div><button class="secondary" onclick="alert('Étape suivante : connexion à une base Supabase commune pour synchroniser les deux téléphones.')">Préparer la synchronisation</button></div>
+  </div>`;
+ }
+}
+function change(id,d){const p=data.products.find(x=>x.id===id);if(p){p.qty=Math.max(0,p.qty+d);save();render()}}
+function delProduct(id){if(confirm('Supprimer cet article ?')){data.products=data.products.filter(p=>p.id!==id);save();render()}}
+function openProduct(id=null,room=null){editingProduct=id;productTitle.textContent=id?'Modifier l’article':'Ajouter un article';pRoom.innerHTML=data.rooms.map(r=>`<option>${esc(r)}</option>`).join('');const p=data.products.find(x=>x.id===id);pName.value=p?.name||'';pQty.value=p?.qty??0;pMin.value=p?.min??1;pRoom.value=p?.room||room||data.rooms[0]||'';productDlg.showModal()}
+function saveProduct(){const name=pName.value.trim();if(!name)return alert('Indique un nom.');if(!pRoom.value)return alert('Ajoute d’abord une pièce.');const obj={name,room:pRoom.value,qty:Math.max(0,+pQty.value||0),min:Math.max(0,+pMin.value||0)};if(editingProduct){Object.assign(data.products.find(p=>p.id===editingProduct),obj)}else data.products.push({id:crypto.randomUUID(),...obj});save();productDlg.close();render()}
+function openRoom(name=null){editingRoom=name;roomTitle.textContent=name?'Renommer la pièce':'Ajouter une pièce';rName.value=name||'';roomDlg.showModal()}
+function saveRoom(){const n=rName.value.trim();if(!n)return alert('Indique un nom.');if(editingRoom){if(data.rooms.includes(n)&&n!==editingRoom)return alert('Cette pièce existe déjà.');data.rooms=data.rooms.map(r=>r===editingRoom?n:r);data.products.forEach(p=>{if(p.room===editingRoom)p.room=n})}else{if(data.rooms.includes(n))return alert('Cette pièce existe déjà.');data.rooms.push(n)}save();roomDlg.close();render()}
+function delRoom(name){if(data.rooms.length===1)return alert('Il doit rester au moins une pièce.');const count=data.products.filter(p=>p.room===name).length;if(count&& !confirm(`Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`))return;const target=data.rooms.find(r=>r!==name);data.products.forEach(p=>{if(p.room===name)p.room=target});data.rooms=data.rooms.filter(r=>r!==name);save();render()}
+const pendingBuy={};
+function toggleBuy(id,checked){
+  if(checked){
+    const p=data.products.find(x=>x.id===id);
+    pendingBuy[id]=Math.max(1,p.min-p.qty);
+    const btn=document.getElementById('validate-'+id);
+    if(btn)btn.style.display='block';
+  }else{
+    delete pendingBuy[id];
+    const btn=document.getElementById('validate-'+id);
+    if(btn)btn.style.display='none';
+  }
+}
+function changeBuyQty(id,d){
+  const p=data.products.find(x=>x.id===id);
+  const current=pendingBuy[id]??Math.max(1,p.min-p.qty);
+  pendingBuy[id]=Math.max(1,current+d);
+  const el=document.getElementById('buy-'+id);
+  if(el)el.textContent=pendingBuy[id];
+}
+function validateBuy(id){
+  const p=data.products.find(x=>x.id===id);
+  if(!p)return;
+  const q=Math.max(1,pendingBuy[id]||1);
+  p.qty+=q;
+  delete pendingBuy[id];
+  save();
+  render();
+}
+render();
+</script>
+</body></html>
