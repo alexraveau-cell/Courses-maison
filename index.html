@@ -94,7 +94,7 @@ async function migrateLocalProductsToSupabase(){
         min_quantity:p.min
       });
 
-    if(error) console.error('Erreur article:',p.name,error);
+    if(error) alert('Erreur pour '+p.name+': '+JSON.stringify(error));
   }
 
   alert('Migration terminée');
