@@ -166,7 +166,7 @@ function render(){
  }
  if(tab==='shopping'){
   const g=roomsGrouped(m);
-  c.innerHTML=`<div class="view"><div class="card"><div class="big">🛒 Ma liste</div><div class="muted">Coche un article après l'achat et indique la quantité réellement achetée.</div></div>
+  c.innerHTML=`<div class="view"><div class="card"><div class="big">🛒 MA LISTE TEST 123</div><div class="muted">Coche un article après l'achat et indique la quantité réellement achetée.</div></div>
   ${Object.keys(g).length?Object.entries(g).map(([r,ps])=>`<div class="section">${esc(r)}</div><div class="card">${ps.map(p=>`
   <div class="item" id="shopping-${p.id}">
    <div class="row">
