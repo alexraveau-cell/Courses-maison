@@ -252,11 +252,24 @@ function changeBuyQty(id,d){
   const el=document.getElementById('buy-'+id);
   if(el)el.textContent=pendingBuy[id];
 }
-function validateBuy(id){
+async function validateBuy(id){
   const p=data.products.find(x=>x.id===id);
   if(!p)return;
+
   const q=Math.max(1,pendingBuy[id]||1);
-  p.qty+=q;
+  const newQty=p.qty+q;
+
+  const {error}=await supabaseClient
+    .from('items')
+    .update({quantity:newQty})
+    .eq('id',p.id);
+
+  if(error){
+    alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  p.qty=newQty;
   delete pendingBuy[id];
   save();
   render();
