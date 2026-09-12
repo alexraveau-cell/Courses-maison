@@ -255,10 +255,17 @@ function toggleBuy(id,checked){
 }
 function changeBuyQty(id,d){
   const p=data.products.find(x=>x.id===id);
-  const current=pendingBuy[id]??Math.max(1,p.min-p.qty);
-  pendingBuy[id]=Math.max(1,current+d);
+  if(!p)return;
+
+  const current=pendingBuy[id] ?? Math.max(1,p.min-p.qty);
+  const newQty=Math.max(1,current+d);
+
+  pendingBuy[id]=newQty;
+
   const el=document.getElementById('buy-'+id);
-  if(el)el.textContent=pendingBuy[id];
+  if(el){
+    el.textContent=newQty;
+  }
 }
 async function validateBuy(id){
   const p=data.products.find(x=>x.id===id);
