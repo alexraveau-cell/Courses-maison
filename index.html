@@ -72,6 +72,8 @@ const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],
 ]};
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
 async function migrateLocalProductsToSupabase(){
+  let errors=[];
+
   for(const p of data.products){
     const room=await supabaseClient
       .from('rooms')
@@ -80,11 +82,11 @@ async function migrateLocalProductsToSupabase(){
       .single();
 
     if(room.error){
-      console.error('Pièce introuvable:',p.room,room.error);
+      errors.push(p.name+' → pièce: '+JSON.stringify(room.error));
       continue;
     }
 
-    const {error}=await supabaseClient
+    const result=await supabaseClient
       .from('Item')
       .insert({
         id:p.id,
@@ -94,10 +96,16 @@ async function migrateLocalProductsToSupabase(){
         min_quantity:p.min
       });
 
-    if(error) alert('Erreur pour '+p.name+': '+JSON.stringify(error));
+    if(result.error){
+      errors.push(p.name+' → article: '+JSON.stringify(result.error));
+    }
   }
 
-  alert('Migration terminée');
+  if(errors.length){
+    alert('ERREURS:\\n\\n'+errors.join('\\n\\n'));
+  }else{
+    alert('Migration réussie : '+data.products.length+' articles transférés.');
+  }
 }
 async function loadFromSupabase(){
   const {data:rooms,error:roomsError}=await supabaseClient
