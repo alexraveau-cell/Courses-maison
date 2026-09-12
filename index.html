@@ -176,7 +176,7 @@ function render(){
    <div class="row space" style="margin-top:12px">
     <span>Quantité achetée</span>
     <div class="buyStepper">
-      <button type="button" onclick="alert('TEST')">+</button>
+      <button type="button" onclick="changeBuyQty('${p.id}',-1)">−</button>
       <span class="buyNumber" id="buy-${p.id}">${Math.max(1,p.min-p.qty)}</span>
       <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
     </div>
