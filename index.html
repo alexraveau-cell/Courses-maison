@@ -28,6 +28,7 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
 .buyStepper button{width:38px;height:38px;border:0;border-radius:10px;background:#eee;font-size:22px}
 .buyNumber{min-width:28px;text-align:center;font-size:17px;font-weight:700}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="app">
@@ -58,6 +59,9 @@ hr{border:0;border-top:1px solid #eee;margin:14px 0}
 
 <script>
 const KEY='coursesMaisonV2';
+const SUPABASE_URL='https://rnzwcgkedydhskyieetw.supabase.co';
+const SUPABASE_KEY='sb_publishable_dVN8RVu7lxpoGzzyGO8OJQ_at_PdKjL';
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],products:[
 {id:crypto.randomUUID(),name:'Lait',room:'Cuisine',qty:1,min:2},
 {id:crypto.randomUUID(),name:'Pâtes',room:'Cuisine',qty:4,min:2},
@@ -67,6 +71,38 @@ const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],
 {id:crypto.randomUUID(),name:'Papier toilette',room:'Salle de bain',qty:3,min:4}
 ]};
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
+async function loadFromSupabase(){
+  const {data:rooms,error:roomsError}=await supabaseClient
+    .from('rooms')
+    .select('*')
+    .order('name');
+
+  if(roomsError){
+    console.error('Erreur rooms:',roomsError);
+    return;
+  }
+
+  const {data:items,error:itemsError}=await supabaseClient
+    .from('Item')
+    .select('*')
+    .order('name');
+
+  if(itemsError){
+    console.error('Erreur Item:',itemsError);
+    return;
+  }
+
+  data.rooms=rooms.map(r=>r.name);
+  data.products=items.map(p=>({
+    id:p.id,
+    name:p.name,
+    room:rooms.find(r=>r.id===p.room_id)?.name||'',
+    qty:p.quantity,
+    min:p.min_quantity
+  }));
+
+  render();
+}
 let tab='home', editingProduct=null, editingRoom=null;
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 function missing(){return data.products.filter(p=>p.qty<p.min)}
@@ -163,6 +199,6 @@ function validateBuy(id){
   save();
   render();
 }
-render();
+loadFromSupabase();
 </script>
 </body></html>
