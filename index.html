@@ -72,6 +72,11 @@ const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],
 ]};
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
 async function migrateLocalProductsToSupabase(){
+  alert(JSON.stringify(data.products.map(p=>({
+  article:p.name,
+  piece:p.room
+})),null,2));
+return;
   let errors=[];
 
   for(const p of data.products){
