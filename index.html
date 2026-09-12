@@ -131,9 +131,9 @@ async function loadFromSupabase(){
     .order('name');
 
   if(itemsError){
-    console.error('Erreur Item:',itemsError);
-    return;
-  }
+  alert('Erreur lecture items :\n\n'+JSON.stringify(itemsError));
+  return;
+}
 
   data.rooms=rooms.map(r=>r.name);
   data.products=items.map(p=>({
