@@ -238,7 +238,11 @@ function toggleBuy(id,checked){
     const p=data.products.find(x=>x.id===id);
     pendingBuy[id]=Math.max(1,p.min-p.qty);
     const btn=document.getElementById('validate-'+id);
-    if(btn)btn.style.display='block';
+    if(btn){
+  btn.style.display='block';
+  btn.style.visibility='visible';
+  btn.style.opacity='1';
+}
   }else{
     delete pendingBuy[id];
     const btn=document.getElementById('validate-'+id);
