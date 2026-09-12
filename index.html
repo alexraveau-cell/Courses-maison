@@ -87,7 +87,6 @@ async function migrateLocalProductsToSupabase(){
   });
 
   const rows=data.products.map(p=>({
-    id:p.id,
     room_id:roomMap[p.room],
     name:p.name,
     quantity:p.qty,
