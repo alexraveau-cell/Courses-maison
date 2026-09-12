@@ -239,10 +239,16 @@ function toggleBuy(id,checked){
   if(checked){
     const p=data.products.find(x=>x.id===id);
     pendingBuy[id]=Math.max(1,p.min-p.qty);
-    if(btn)btn.style.display='block';
+
+    if(btn){
+      btn.style.display='block';
+    }
   }else{
     delete pendingBuy[id];
-    if(btn)btn.style.display='none';
+
+    if(btn){
+      btn.style.display='none';
+    }
   }
 }
 function changeBuyQty(id,d){
