@@ -181,7 +181,7 @@ function render(){
       <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
     </div>
    </div>
-   <button type="button" class="validateBuy" id="validate-${p.id}" style="display:none;width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
+   <button type="button" class="validateBuy" id="validate-${p.id}" style="width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
   </div>`).join('')}</div>`).join(''):`<div class="card empty"><div class="ok">🎉</div><b>Liste vide</b><div class="muted">Tous les articles sont au-dessus de leur seuil.</div></div>`}
   </div>`;
  }
@@ -234,18 +234,14 @@ function saveRoom(){const n=rName.value.trim();if(!n)return alert('Indique un no
 function delRoom(name){if(data.rooms.length===1)return alert('Il doit rester au moins une pièce.');const count=data.products.filter(p=>p.room===name).length;if(count&& !confirm(`Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`))return;const target=data.rooms.find(r=>r!==name);data.products.forEach(p=>{if(p.room===name)p.room=target});data.rooms=data.rooms.filter(r=>r!==name);save();render()}
 const pendingBuy={};
 function toggleBuy(id,checked){
+  const btn=document.getElementById('validate-'+id);
+
   if(checked){
     const p=data.products.find(x=>x.id===id);
     pendingBuy[id]=Math.max(1,p.min-p.qty);
-    const btn=document.getElementById('validate-'+id);
-    if(btn){
-  btn.style.display='block';
-  btn.style.visibility='visible';
-  btn.style.opacity='1';
-}
+    if(btn)btn.style.display='block';
   }else{
     delete pendingBuy[id];
-    const btn=document.getElementById('validate-'+id);
     if(btn)btn.style.display='none';
   }
 }
