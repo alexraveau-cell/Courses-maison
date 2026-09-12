@@ -71,6 +71,34 @@ const initial={rooms:['Cuisine','Salle de bain','Buanderie','Chambre','Garage'],
 {id:crypto.randomUUID(),name:'Papier toilette',room:'Salle de bain',qty:3,min:4}
 ]};
 let data=JSON.parse(localStorage.getItem(KEY)||'null')||initial;
+async function migrateLocalProductsToSupabase(){
+  for(const p of data.products){
+    const room=await supabaseClient
+      .from('rooms')
+      .select('id')
+      .eq('name',p.room)
+      .single();
+
+    if(room.error){
+      console.error('Pièce introuvable:',p.room,room.error);
+      continue;
+    }
+
+    const {error}=await supabaseClient
+      .from('Item')
+      .insert({
+        id:p.id,
+        room_id:room.data.id,
+        name:p.name,
+        quantity:p.qty,
+        min_quantity:p.min
+      });
+
+    if(error) console.error('Erreur article:',p.name,error);
+  }
+
+  alert('Migration terminée');
+}
 async function loadFromSupabase(){
   const {data:rooms,error:roomsError}=await supabaseClient
     .from('rooms')
@@ -199,6 +227,6 @@ function validateBuy(id){
   save();
   render();
 }
-// loadFromSupabase();
+migrateLocalProductsToSupabase();
 </script>
 </body></html>
