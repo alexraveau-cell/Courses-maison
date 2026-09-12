@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7fb">
+<title>Courses Maison</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:#f6f7fb;color:#17181c}
+.app{max-width:520px;margin:auto;min-height:100vh;padding-bottom:90px}
+header{padding:28px 20px 12px}h1{font-size:30px;margin:0 0 4px}.sub{color:#777}
+.view{padding:8px 16px}.card{background:#fff;border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 2px 14px #0000000a}
+.big{font-size:21px;font-weight:700}.muted{color:#777}
+.primary{border:0;border-radius:14px;background:#17181c;color:#fff;padding:13px 16px;font-size:16px;font-weight:650;width:100%;margin-top:12px}
+.row{display:flex;align-items:center;gap:12px}.space{justify-content:space-between}
+.icon{font-size:25px}.pill{background:#f0f1f5;border-radius:20px;padding:6px 10px;font-size:13px}
+.item{padding:13px 0;border-bottom:1px solid #eee}.item:last-child{border-bottom:0}
+.step{display:flex;align-items:center;gap:9px}.step button{width:32px;height:32px;border:0;border-radius:10px;background:#eee;font-size:20px}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(520px,100%);height:76px;background:#fff;border-top:1px solid #eee;display:flex;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom);z-index:4}
+nav button{border:0;background:none;font-size:12px;color:#777;flex:1}nav button.active{color:#111;font-weight:700}nav span{display:block;font-size:23px;margin-bottom:2px}
+.section{font-size:14px;font-weight:700;color:#777;margin:20px 4px 6px;text-transform:uppercase}
+.empty{text-align:center;padding:45px 15px}.ok{font-size:48px}
+dialog{border:0;border-radius:22px;width:min(92%,430px);padding:0;box-shadow:0 20px 60px #0004}dialog::backdrop{background:#0006}.modal{padding:22px}.modal input,.modal select{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;margin:7px 0 13px;font-size:16px}.actions{display:flex;gap:10px}.secondary{background:#eee;color:#111}.delete{color:#c33;background:none;border:0}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>Ma maison 🏠</h1><div class="sub">Gestion du stock & liste de courses</div></header>
+<main id="content"></main>
+<nav>
+<button data-tab="home" onclick="show('home')"><span>🏠</span>Accueil</button>
+<button data-tab="shopping" onclick="show('shopping')"><span>🛒</span>Courses</button>
+<button data-tab="stock" onclick="show('stock')"><span>📦</span>Stock</button>
+</nav>
+</div>
+<dialog id="dlg"><div class="modal">
+<h2>Ajouter un produit</h2>
+<label>Nom</label><input id="name" placeholder="Ex. Lait">
+<label>Pièce</label><select id="room"><option>Cuisine</option><option>Salle de bain</option><option>Buanderie</option><option>Chambre</option><option>Garage</option><option>Autre</option></select>
+<label>Quantité actuelle</label><input id="qty" type="number" min="0" value="0">
+<label>Seuil minimum</label><input id="min" type="number" min="0" value="1">
+<div class="actions"><button class="primary secondary" onclick="dlg.close()">Annuler</button><button class="primary" onclick="add()">Ajouter</button></div>
+</div></dialog>
+<script>
+const KEY='coursesMaisonV1';
+let products=JSON.parse(localStorage.getItem(KEY)||'null')||[
+{name:'Lait',room:'Cuisine',qty:1,min:2},{name:'Pâtes',room:'Cuisine',qty:4,min:2},{name:'Café',room:'Cuisine',qty:0,min:1},
+{name:'Dentifrice',room:'Salle de bain',qty:1,min:1},{name:'Lessive',room:'Buanderie',qty:0,min:1},{name:'Papier toilette',room:'Salle de bain',qty:3,min:4}
+];
+let tab='home';
+function save(){localStorage.setItem(KEY,JSON.stringify(products))}
+function missing(){return products.filter(p=>p.qty<p.min)}
+function show(t){tab=t;render()}
+function render(){
+ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+ const c=document.getElementById('content'); let m=missing();
+ if(tab==='home') c.innerHTML=`<div class="view">
+ <div class="card"><div class="big">Bonjour 👋</div><div class="muted">${m.length} produit${m.length>1?'s':''} à acheter</div>
+ <button class="primary" onclick="show('shopping')">🛒 Voir ma liste de courses</button></div>
+ <div class="section">Sous le seuil</div><div class="card">${m.length?m.map(p=>`<div class="item row space"><span>${p.name}</span><b>× ${p.min-p.qty}</b></div>`).join(''):`<div class="empty"><div class="ok">✅</div><b>Tout est en stock !</b></div>`}</div>
+ </div>`;
+ if(tab==='shopping'){
+   let groups={};m.forEach(p=>(groups[p.room]??=[]).push(p));
+   c.innerHTML=`<div class="view"><div class="card"><div class="big">🛒 Ma liste</div><div class="muted">${m.reduce((a,p)=>a+p.min-p.qty,0)} article(s) à acheter</div></div>
+   ${Object.keys(groups).length?Object.entries(groups).map(([r,ps])=>`<div class="section">${r}</div><div class="card">${ps.map(p=>`<div class="item row space"><span>☐ ${p.name}</span><b>× ${p.min-p.qty}</b></div>`).join('')}</div>`).join(''):`<div class="card empty"><div class="ok">🎉</div><b>Liste vide</b><div class="muted">Tous les produits sont au-dessus de leur seuil.</div></div>`}
+   ${m.length?`<button class="primary" onclick="resetMissing()">✓ J'ai fait les courses</button>`:''}</div>`;
+ }
+ if(tab==='stock') c.innerHTML=`<div class="view"><button class="primary" onclick="dlg.showModal()">＋ Ajouter un produit</button>
+ ${products.map((p,i)=>`<div class="card"><div class="row space"><div><div class="big">${p.name}</div><div class="muted">${p.room}</div></div><button class="delete" onclick="del(${i})">Supprimer</button></div>
+ <div class="row space" style="margin-top:14px"><span>Stock : <b>${p.qty}</b></span><div class="step"><button onclick="change(${i},-1)">−</button><button onclick="change(${i},1)">+</button></div></div>
+ <div class="muted" style="margin-top:8px">Seuil minimum : ${p.min}${p.qty<p.min?` · <b style="color:#c33">À acheter : ${p.min-p.qty}</b>`:''}</div></div>`).join('')}</div>`;
+}
+function change(i,d){products[i].qty=Math.max(0,products[i].qty+d);save();render()}
+function del(i){products.splice(i,1);save();render()}
+function resetMissing(){products.forEach(p=>{if(p.qty<p.min)p.qty=p.min});save();render()}
+function add(){let n=document.getElementById('name').value.trim();if(!n)return;products.push({name:n,room:room.value,qty:+qty.value||0,min:+min.value||0});save();dlg.close();['name','qty','min'].forEach(id=>document.getElementById(id).value=id==='name'?'':id==='min'?1:0);render()}
+render();
+</script>
+</body></html>
