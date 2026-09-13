@@ -348,9 +348,35 @@ async function saveRoom(){
 
   if(!n)return alert('Indique un nom.');
 
+  if(data.rooms.includes(n)&&n!==editingRoom)
+    return alert('Cette pièce existe déjà.');
+
+  // Renommage
   if(editingRoom){
-    if(data.rooms.includes(n)&&n!==editingRoom)
-      return alert('Cette pièce existe déjà.');
+
+    const {data:room,error:roomError}=await supabaseClient
+      .from('rooms')
+      .select('id')
+      .eq('name',editingRoom)
+      .single();
+
+    if(roomError){
+      alert('Erreur recherche pièce :\n\n'+JSON.stringify(roomError));
+      return;
+    }
+
+    const {error}=await supabaseClient
+      .from('rooms')
+      .update({
+        name:n,
+        updated_at:new Date().toISOString()
+      })
+      .eq('id',room.id);
+
+    if(error){
+      alert('Erreur renommage pièce :\n\n'+JSON.stringify(error));
+      return;
+    }
 
     data.rooms=data.rooms.map(r=>r===editingRoom?n:r);
     data.products.forEach(p=>{
@@ -363,9 +389,7 @@ async function saveRoom(){
     return;
   }
 
-  if(data.rooms.includes(n))
-    return alert('Cette pièce existe déjà.');
-
+  // Création
   const {data:newRoom,error}=await supabaseClient
     .from('rooms')
     .insert({name:n})
