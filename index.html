@@ -178,7 +178,7 @@ function render(){
     <div class="buyStepper">
       <button type="button" onclick="changeBuyQty('${p.id}',-1)">−</button>
       <span class="buyNumber" id="buy-${p.id}">${Math.max(1,p.min-p.qty)}</span>
-      <button type="button" onclick="alert(data.products.find(x=>x.id==='${p.id}') ? 'ARTICLE TROUVÉ' : 'ARTICLE NON TROUVÉ')">+</button>
+      <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
     </div>
    </div>
    <button type="button" class="validateBuy" id="validate-${p.id}" hidden style="width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
@@ -254,7 +254,7 @@ function toggleBuy(id,checked){
   }
 }
 function changeBuyQty(id,d){
-  const p=data.products.find(x=>x.id===id);
+  const p=data.products.find(x=>String(x.id)===String(id));
   if(!p)return;
 
   const current=pendingBuy[id] ?? Math.max(1,p.min-p.qty);
