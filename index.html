@@ -146,6 +146,37 @@ async function loadFromSupabase(){
 
   render();
 }
+function startRealtime(){
+
+  supabaseClient
+    .channel('courses-maison-realtime')
+
+    .on(
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:'items'
+      },
+      async ()=>{
+        await loadFromSupabase();
+      }
+    )
+
+    .on(
+      'postgres_changes',
+      {
+        event:'*',
+        schema:'public',
+        table:'rooms'
+      },
+      async ()=>{
+        await loadFromSupabase();
+      }
+    )
+
+    .subscribe();
+}
 let tab='home', editingProduct=null, editingRoom=null;
 function save(){localStorage.setItem(KEY,JSON.stringify(data))}
 function missing(){return data.products.filter(p=>p.qty<p.min)}
