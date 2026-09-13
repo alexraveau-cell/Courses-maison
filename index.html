@@ -343,7 +343,46 @@ async function saveProduct(){
   render();
 }
 function openRoom(name=null){editingRoom=name;roomTitle.textContent=name?'Renommer la pièce':'Ajouter une pièce';rName.value=name||'';roomDlg.showModal()}
-function saveRoom(){const n=rName.value.trim();if(!n)return alert('Indique un nom.');if(editingRoom){if(data.rooms.includes(n)&&n!==editingRoom)return alert('Cette pièce existe déjà.');data.rooms=data.rooms.map(r=>r===editingRoom?n:r);data.products.forEach(p=>{if(p.room===editingRoom)p.room=n})}else{if(data.rooms.includes(n))return alert('Cette pièce existe déjà.');data.rooms.push(n)}save();roomDlg.close();render()}
+async function saveRoom(){
+  const n=rName.value.trim();
+
+  if(!n)return alert('Indique un nom.');
+
+  if(editingRoom){
+    if(data.rooms.includes(n)&&n!==editingRoom)
+      return alert('Cette pièce existe déjà.');
+
+    data.rooms=data.rooms.map(r=>r===editingRoom?n:r);
+    data.products.forEach(p=>{
+      if(p.room===editingRoom)p.room=n;
+    });
+
+    save();
+    roomDlg.close();
+    render();
+    return;
+  }
+
+  if(data.rooms.includes(n))
+    return alert('Cette pièce existe déjà.');
+
+  const {data:newRoom,error}=await supabaseClient
+    .from('rooms')
+    .insert({name:n})
+    .select()
+    .single();
+
+  if(error){
+    alert('Erreur ajout pièce :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  data.rooms.push(newRoom.name);
+
+  save();
+  roomDlg.close();
+  render();
+}
 function delRoom(name){if(data.rooms.length===1)return alert('Il doit rester au moins une pièce.');const count=data.products.filter(p=>p.room===name).length;if(count&& !confirm(`Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`))return;const target=data.rooms.find(r=>r!==name);data.products.forEach(p=>{if(p.room===name)p.room=target});data.rooms=data.rooms.filter(r=>r!==name);save();render()}
 const pendingBuy={};
 function toggleBuy(id,checked){
