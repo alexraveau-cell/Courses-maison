@@ -268,18 +268,15 @@ function changeBuyQty(id,d){
   }
 }
 async function validateBuy(id){
-  const p=data.products.find(x=>x.id===id);
-  if(!p)return;
+  const p=data.products.find(x=>String(x.id)===String(id));
 
-  const q=Math.max(1,pendingBuy[id]||1);
-  const newQty=p.qty+q;
+  if(!p){
+    alert('ARTICLE NON TROUVÉ DANS VALIDATE');
+    return;
+  }
 
-  const {data:result,error}=await supabaseClient
-  .from('items')
-  .update({quantity:newQty})
-  .eq('id',p.id);
-
-alert(error ? 'ERREUR : '+JSON.stringify(error) : 'SUPABASE OK');
+  alert('ARTICLE TROUVÉ DANS VALIDATE : '+p.name);
+}
 
   if(error){
     alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
