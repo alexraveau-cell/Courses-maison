@@ -181,7 +181,7 @@ function render(){
       <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
     </div>
    </div>
-   <button type="button" class="validateBuy" id="validate-${p.id}" style="display:none;width:100%;margin-top:12px" onclick="alert(data.products.find(x=>String(x.id)===String('${p.id}')) ? 'ARTICLE TROUVÉ' : 'ARTICLE NON TROUVÉ')">✓ Valider l’achat</button>
+   <button type="button" class="validateBuy" id="validate-${p.id}" style="display:none;width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
   </div>`).join('')}</div>`).join(''):`<div class="card empty"><div class="ok">🎉</div><b>Liste vide</b><div class="muted">Tous les articles sont au-dessus de leur seuil.</div></div>`}
   </div>`;
  }
@@ -274,10 +274,11 @@ async function validateBuy(id){
   const q=Math.max(1,pendingBuy[id]||1);
   const newQty=p.qty+q;
 
-  const {error}=await supabaseClient
+  const {data:result,error}=await supabaseClient
     .from('items')
     .update({quantity:newQty})
     .eq('id',p.id);
+alert(error ? 'ERREUR : '+JSON.stringify(error) : 'SUPABASE OK');
 
   if(error){
     alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
