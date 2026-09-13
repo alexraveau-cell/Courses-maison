@@ -228,7 +228,66 @@ async function change(id,d){
 }
 function delProduct(id){if(confirm('Supprimer cet article ?')){data.products=data.products.filter(p=>p.id!==id);save();render()}}
 function openProduct(id=null,room=null){editingProduct=id;productTitle.textContent=id?'Modifier l’article':'Ajouter un article';pRoom.innerHTML=data.rooms.map(r=>`<option>${esc(r)}</option>`).join('');const p=data.products.find(x=>x.id===id);pName.value=p?.name||'';pQty.value=p?.qty??0;pMin.value=p?.min??1;pRoom.value=p?.room||room||data.rooms[0]||'';productDlg.showModal()}
-function saveProduct(){const name=pName.value.trim();if(!name)return alert('Indique un nom.');if(!pRoom.value)return alert('Ajoute d’abord une pièce.');const obj={name,room:pRoom.value,qty:Math.max(0,+pQty.value||0),min:Math.max(0,+pMin.value||0)};if(editingProduct){Object.assign(data.products.find(p=>p.id===editingProduct),obj)}else data.products.push({id:crypto.randomUUID(),...obj});save();productDlg.close();render()}
+async function saveProduct(){
+  const name=pName.value.trim();
+
+  if(!name)return alert('Indique un nom.');
+  if(!pRoom.value)return alert('Ajoute d’abord une pièce.');
+
+  const obj={
+    name,
+    room:pRoom.value,
+    qty:Math.max(0,+pQty.value||0),
+    min:Math.max(0,+pMin.value||0)
+  };
+
+  if(editingProduct){
+    Object.assign(data.products.find(p=>p.id===editingProduct),obj);
+    save();
+    productDlg.close();
+    render();
+    return;
+  }
+
+  const room=await supabaseClient
+    .from('rooms')
+    .select('id')
+    .eq('name',pRoom.value)
+    .single();
+
+  if(room.error){
+    alert('Erreur recherche pièce :\n\n'+JSON.stringify(room.error));
+    return;
+  }
+
+  const {data:newItem,error}=await supabaseClient
+    .from('items')
+    .insert({
+      room_id:room.data.id,
+      name:obj.name,
+      quantity:obj.qty,
+      min_quantity:obj.min
+    })
+    .select()
+    .single();
+
+  if(error){
+    alert('Erreur ajout article :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  data.products.push({
+    id:newItem.id,
+    name:newItem.name,
+    room:pRoom.value,
+    qty:newItem.quantity,
+    min:newItem.min_quantity
+  });
+
+  save();
+  productDlg.close();
+  render();
+}
 function openRoom(name=null){editingRoom=name;roomTitle.textContent=name?'Renommer la pièce':'Ajouter une pièce';rName.value=name||'';roomDlg.showModal()}
 function saveRoom(){const n=rName.value.trim();if(!n)return alert('Indique un nom.');if(editingRoom){if(data.rooms.includes(n)&&n!==editingRoom)return alert('Cette pièce existe déjà.');data.rooms=data.rooms.map(r=>r===editingRoom?n:r);data.products.forEach(p=>{if(p.room===editingRoom)p.room=n})}else{if(data.rooms.includes(n))return alert('Cette pièce existe déjà.');data.rooms.push(n)}save();roomDlg.close();render()}
 function delRoom(name){if(data.rooms.length===1)return alert('Il doit rester au moins une pièce.');const count=data.products.filter(p=>p.room===name).length;if(count&& !confirm(`Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`))return;const target=data.rooms.find(r=>r!==name);data.products.forEach(p=>{if(p.room===name)p.room=target});data.rooms=data.rooms.filter(r=>r!==name);save();render()}
