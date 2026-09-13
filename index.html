@@ -593,8 +593,40 @@ async function validateBuy(id){
   render();
 }
 
-  
-loadFromSupabase();
-startRealtime();
+  async function initApp(){
+
+  const {data:{session},error}=await supabaseClient.auth.getSession();
+
+  if(error){
+    console.error('Erreur session :',error);
+    return;
+  }
+
+  if(!session){
+    document.getElementById('content').innerHTML=`
+      <div class="view">
+        <div class="card">
+          <div class="big">🔐 Connexion</div>
+          <div class="muted">Connecte-toi pour accéder à ta maison.</div>
+
+          <label>E-mail</label>
+          <input id="loginEmail" type="email" placeholder="Ton e-mail">
+
+          <label>Mot de passe</label>
+          <input id="loginPassword" type="password" placeholder="Ton mot de passe">
+
+          <button class="primary" onclick="login()">Se connecter</button>
+        </div>
+      </div>
+    `;
+
+    return;
+  }
+
+  await loadFromSupabase();
+  startRealtime();
+}
+
+initApp();
 </script>
 </body></html>
