@@ -407,7 +407,81 @@ async function saveRoom(){
   roomDlg.close();
   render();
 }
-function delRoom(name){if(data.rooms.length===1)return alert('Il doit rester au moins une pièce.');const count=data.products.filter(p=>p.room===name).length;if(count&& !confirm(`Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`))return;const target=data.rooms.find(r=>r!==name);data.products.forEach(p=>{if(p.room===name)p.room=target});data.rooms=data.rooms.filter(r=>r!==name);save();render()}
+async function delRoom(name){
+  if(data.rooms.length===1)
+    return alert('Il doit rester au moins une pièce.');
+
+  const count=data.products.filter(p=>p.room===name).length;
+
+  if(count && !confirm(
+    `Cette pièce contient ${count} article(s). Ils seront déplacés vers la première autre pièce.`
+  )) return;
+
+  const target=data.rooms.find(r=>r!==name);
+
+  // Trouver les deux pièces dans Supabase
+  const {data:rooms,error:roomsError}=await supabaseClient
+    .from('rooms')
+    .select('id,name')
+    .in('name',[name,target]);
+
+  if(roomsError){
+    alert('Erreur lecture des pièces :\n\n'+JSON.stringify(roomsError));
+    return;
+  }
+
+  const sourceRoom=rooms.find(r=>r.name===name);
+  const targetRoom=rooms.find(r=>r.name===target);
+
+  if(!sourceRoom || !targetRoom){
+    alert('Impossible de trouver les pièces dans Supabase.');
+    return;
+  }
+
+  // Déplacer les articles vers la nouvelle pièce
+  if(count){
+
+    const {error:updateError}=await supabaseClient
+      .from('items')
+      .update({
+        room_id:targetRoom.id,
+        updated_at:new Date().toISOString()
+      })
+      .eq('room_id',sourceRoom.id);
+
+    if(updateError){
+      alert(
+        'Erreur déplacement des articles :\n\n'+
+        JSON.stringify(updateError)
+      );
+      return;
+    }
+  }
+
+  // Supprimer la pièce
+  const {error:deleteError}=await supabaseClient
+    .from('rooms')
+    .delete()
+    .eq('id',sourceRoom.id);
+
+  if(deleteError){
+    alert(
+      'Erreur suppression pièce :\n\n'+
+      JSON.stringify(deleteError)
+    );
+    return;
+  }
+
+  // Mise à jour locale
+  data.products.forEach(p=>{
+    if(p.room===name)p.room=target;
+  });
+
+  data.rooms=data.rooms.filter(r=>r!==name);
+
+  save();
+  render();
+}
 const pendingBuy={};
 function toggleBuy(id,checked){
   const btn=document.getElementById('validate-'+id);
