@@ -270,12 +270,25 @@ function changeBuyQty(id,d){
 async function validateBuy(id){
   const p=data.products.find(x=>String(x.id)===String(id));
 
-  if(!p){
-    alert('ARTICLE NON TROUVÉ DANS VALIDATE');
+  if(!p)return;
+
+  const q=Math.max(1,pendingBuy[id]||1);
+  const newQty=p.qty+q;
+
+  const {error}=await supabaseClient
+    .from('items')
+    .update({quantity:newQty})
+    .eq('id',p.id);
+
+  if(error){
+    alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
     return;
   }
 
-  alert('ARTICLE TROUVÉ DANS VALIDATE : '+p.name);
+  p.qty=newQty;
+  delete pendingBuy[id];
+  save();
+  render();
 }
 
   
