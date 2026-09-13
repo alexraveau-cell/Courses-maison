@@ -232,24 +232,29 @@ async function change(id,d){
   save();
   render();
 }
-
 async function delProduct(id){
   if(!confirm('Supprimer cet article ?'))return;
 
-  const {error}=await supabaseClient
+  const {data:deleted,error}=await supabaseClient
     .from('items')
     .delete()
-    .eq('id',id);
+    .eq('id',id)
+    .select();
 
   if(error){
-    alert('Erreur de suppression :\n\n'+JSON.stringify(error));
+    alert('Erreur suppression :\n\n'+JSON.stringify(error));
     return;
   }
+
+  alert('Supabase a supprimé :\n\n'+JSON.stringify(deleted));
 
   data.products=data.products.filter(p=>p.id!==id);
   save();
   render();
 }
+
+
+
 function openProduct(id=null,room=null){editingProduct=id;productTitle.textContent=id?'Modifier l’article':'Ajouter un article';pRoom.innerHTML=data.rooms.map(r=>`<option>${esc(r)}</option>`).join('');const p=data.products.find(x=>x.id===id);pName.value=p?.name||'';pQty.value=p?.qty??0;pMin.value=p?.min??1;pRoom.value=p?.room||room||data.rooms[0]||'';productDlg.showModal()}
 async function saveProduct(){
   const name=pName.value.trim();
