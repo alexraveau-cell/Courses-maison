@@ -240,14 +240,44 @@ async function saveProduct(){
     qty:Math.max(0,+pQty.value||0),
     min:Math.max(0,+pMin.value||0)
   };
-
   if(editingProduct){
-    Object.assign(data.products.find(p=>p.id===editingProduct),obj);
-    save();
-    productDlg.close();
-    render();
+  const p=data.products.find(p=>p.id===editingProduct);
+
+  if(!p)return;
+
+  const room=await supabaseClient
+    .from('rooms')
+    .select('id')
+    .eq('name',pRoom.value)
+    .single();
+
+  if(room.error){
+    alert('Erreur recherche pièce :\n\n'+JSON.stringify(room.error));
     return;
   }
+
+  const {error}=await supabaseClient
+    .from('items')
+    .update({
+      room_id:room.data.id,
+      name:obj.name,
+      quantity:obj.qty,
+      min_quantity:obj.min
+    })
+    .eq('id',p.id);
+
+  if(error){
+    alert('Erreur modification article :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  Object.assign(p,obj);
+
+  save();
+  productDlg.close();
+  render();
+  return;
+}
 
   const room=await supabaseClient
     .from('rooms')
