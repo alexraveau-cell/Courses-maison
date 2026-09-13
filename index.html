@@ -170,7 +170,7 @@ function render(){
   ${Object.keys(g).length?Object.entries(g).map(([r,ps])=>`<div class="section">${esc(r)}</div><div class="card">${ps.map(p=>`
   <div class="item" id="shopping-${p.id}">
    <div class="row">
-    <input class="check" id="check-${p.id}" type="checkbox" onchange="toggleBuy('${p.id}',this.checked)">
+    <input class="check" id="check-${p.id}" type="checkbox" onchange="document.getElementById('validate-${p.id}').style.display=this.checked?'block':'none';toggleBuy('${p.id}',this.checked)">
     <div style="flex:1"><b>${esc(p.name)}</b><div class="hint">Stock ${p.qty} · minimum ${p.min} · conseillé ${p.min-p.qty}</div></div>
    </div>
    <div class="row space" style="margin-top:12px">
