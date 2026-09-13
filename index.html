@@ -233,8 +233,23 @@ async function change(id,d){
   render();
 }
 
+async function delProduct(id){
+  if(!confirm('Supprimer cet article ?'))return;
 
-function delProduct(id){if(confirm('Supprimer cet article ?')){data.products=data.products.filter(p=>p.id!==id);save();render()}}
+  const {error}=await supabaseClient
+    .from('items')
+    .delete()
+    .eq('id',id);
+
+  if(error){
+    alert('Erreur de suppression :\n\n'+JSON.stringify(error));
+    return;
+  }
+
+  data.products=data.products.filter(p=>p.id!==id);
+  save();
+  render();
+}
 function openProduct(id=null,room=null){editingProduct=id;productTitle.textContent=id?'Modifier l’article':'Ajouter un article';pRoom.innerHTML=data.rooms.map(r=>`<option>${esc(r)}</option>`).join('');const p=data.products.find(x=>x.id===id);pName.value=p?.name||'';pQty.value=p?.qty??0;pMin.value=p?.min??1;pRoom.value=p?.room||room||data.rooms[0]||'';productDlg.showModal()}
 async function saveProduct(){
   const name=pName.value.trim();
