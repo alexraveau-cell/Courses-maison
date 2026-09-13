@@ -181,7 +181,7 @@ function render(){
       <button type="button" onclick="changeBuyQty('${p.id}',1)">+</button>
     </div>
    </div>
-   <button type="button" class="validateBuy" id="validate-${p.id}" style="width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
+   <button type="button" class="validateBuy" id="validate-${p.id}" style="display:none;width:100%;margin-top:12px" onclick="validateBuy('${p.id}')">✓ Valider l’achat</button>
   </div>`).join('')}</div>`).join(''):`<div class="card empty"><div class="ok">🎉</div><b>Liste vide</b><div class="muted">Tous les articles sont au-dessus de leur seuil.</div></div>`}
   </div>`;
  }
