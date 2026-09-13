@@ -275,9 +275,10 @@ async function validateBuy(id){
   const newQty=p.qty+q;
 
   const {data:result,error}=await supabaseClient
-    .from('items')
-    .update({quantity:newQty})
-    .eq('id',p.id);
+  .from('items')
+  .update({quantity:newQty})
+  .eq('id',p.id);
+
 alert(error ? 'ERREUR : '+JSON.stringify(error) : 'SUPABASE OK');
 
   if(error){
