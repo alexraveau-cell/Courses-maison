@@ -278,16 +278,7 @@ async function validateBuy(id){
   alert('ARTICLE TROUVÉ DANS VALIDATE : '+p.name);
 }
 
-  if(error){
-    alert('Erreur de synchronisation :\n\n'+JSON.stringify(error));
-    return;
-  }
-
-  p.qty=newQty;
-  delete pendingBuy[id];
-  save();
-  render();
-}
+  
 loadFromSupabase();
 </script>
 </body></html>
